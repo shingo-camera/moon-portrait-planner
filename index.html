@@ -594,7 +594,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
     </div>
     <div>
       <div class="sec">06 チャンス一覧</div>
-      <button id="btn-chance" onclick="calcChances()" style="width:100%;background:var(--sur2);border:1px solid var(--bd);border-radius:4px;color:var(--ac);font-family:'Space Mono',monospace;font-size:10px;padding:5px;cursor:pointer;margin-bottom:4px;">📅 選択日から90日を検索</button>
+      <button id="btn-chance" onclick="calcChances()" style="width:100%;background:var(--sur2);border:1px solid var(--bd);border-radius:4px;color:var(--ac);font-family:'Space Mono',monospace;font-size:10px;padding:5px;cursor:pointer;margin-bottom:4px;">📅 選択日から365日を検索</button>
       <div id="chance-list" style="color:var(--tx);"></div>
       <button id="btn-fullmoon" onclick="calcFullMoonChances()" style="width:100%;background:var(--sur2);border:1px solid var(--bd);border-radius:4px;color:var(--ac);font-family:'Space Mono',monospace;font-size:10px;padding:5px;cursor:pointer;margin-top:6px;margin-bottom:4px;">🌕 満月チャンス（1年）を検索</button>
       <div id="fullmoon-list" style="color:var(--tx);"></div>
@@ -879,7 +879,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
     <span onclick="setNow();updatePinPanelDatetime();" style="font-family:'Space Mono',monospace;font-size:10px;font-weight:700;color:var(--ac);border:1px solid var(--ac);border-radius:3px;padding:2px 7px;cursor:pointer;">NOW</span>
   </div>
   <div style="padding:10px 16px;border-bottom:1px solid var(--bd);flex-shrink:0;">
-    <button id="btn-pin-bulk" onclick="runPinBulkSearch()" style="width:100%;background:var(--sur2);border:1px solid var(--bd);border-radius:4px;color:var(--ac);font-family:'Space Mono',monospace;font-size:10px;padding:5px;cursor:pointer;">📅 登録地点90日一括ピンポイント検索(30m以内)</button>
+    <!-- 一括検索：ポートレートモードでは不使用 -->
   </div>
   <div id="pin-list" style="overflow-y:auto;flex:1;padding:8px 16px;"></div>
 </div>
@@ -4098,7 +4098,7 @@ function setSunsetMode(v){
   _all('lb-sunset').forEach(el=>{el.style.color=v?'var(--ac)':'var(--sub)';});
   const pvLabel=document.getElementById('pv-label-text');
   if(pvLabel)pvLabel.textContent=v?'◎ プレビュー（対象 + 太陽）':'◎ プレビュー（対象 + 月）';
-  _all('btn-chance').forEach(el=>{el.textContent=v?'📅 選択日から90日を検索（太陽）':'📅 選択日から90日を検索';});
+  _all('btn-chance').forEach(el=>{el.textContent=v?'📅 選択日から365日を検索（太陽）':'📅 選択日から365日を検索';});
   _all('btn-fullmoon').forEach(el=>{el.style.display=v?'none':'';});
   _all('btn-mooncal').forEach(el=>{el.style.display=v?'none':'';});
   // 満月リストをクリア（太陽モード時）
@@ -4725,7 +4725,7 @@ function searchPinChances(pin){
 
   // 月・太陽の両モードを検索
   for(const isSun of [false,true]){
-    for(let d=0;d<90;d++){
+    for(let d=0;d<365;d++){
       const base=new Date(today.getTime()+d*86400000);
       const ds=base.toLocaleDateString('sv-SE',{timeZone:'Asia/Tokyo'});
       const dayStart=new Date(ds+'T00:00:00+09:00');
@@ -4932,7 +4932,7 @@ async function runPinBulkSearch(){
     },20));
   }
 
-  if(btn) btn.textContent='📅 登録地点90日一括ピンポイント検索(30m以内)';
+  if(btn) btn.textContent='📅 登録地点365日一括ピンポイント検索(30m以内)';
 }
 
 function renamePinAt(idx){
@@ -5450,7 +5450,7 @@ function calcChances(){
     const distM=distH*1000; // 撮影地点〜対象の水平距離(m)
     const baseAlt=elAng(distH,sElev,t.elev,0); // 根元仰角
 
-    for(let d=0;d<90;d++){
+    for(let d=0;d<365;d++){
       const base=new Date(today.getTime()+d*86400000);
       const ds=base.toLocaleDateString('sv-SE',{timeZone:'Asia/Tokyo'});
       const dayStart=new Date(ds+'T00:00:00+09:00');
@@ -5503,10 +5503,10 @@ function calcChances(){
       }
     }
 
-    btn.textContent=sunsetMode?"📅 選択日から90日を検索（太陽）":"📅 選択日から90日を検索";
+    btn.textContent=sunsetMode?"📅 選択日から365日を検索（太陽）":"📅 選択日から365日を検索";
 
     if(results.length===0){
-      list.textContent="今後90日以内に条件を満たす日はありません。（方位角±"+AZ_THR+"°）";
+      list.textContent="今後365日以内に条件を満たす日はありません。（方位角±"+AZ_THR+"°）";
       updateDrawerIfOpen();
       return;
     }
