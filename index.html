@@ -1654,7 +1654,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 function initMap(){
   const t=_ct();
   map=L.map('map',{zoomControl:true,attributionControl:true})
-       .setView([t.lat,t.lng],t.zoom);
+       .setView([34.65, 135.50], 13); // ポートレート版：大阪付近を初期表示
 
   const osmLayer=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
     attribution:'© OpenStreetMap contributors',maxZoom:19
@@ -3048,7 +3048,200 @@ function drawView(dist,tAz,va){
     drawPortraitSilhouette(ctx, cx, tY, bY, thTrue);
   }
 
+  // 軌道描画
+  if(ds&&ts&&sLat!==null){
+    try{
+      const dt0=new Date(`${ds}T${ts}:00+09:00`);
+      const dayStart=new Date(`${ds}T00:00:00+09:00`);
 
+      const isMobCanvas = W < 500;
+      const dayLabelInterval = fvH<8?1 : fvH<20?5 : fvH<60?15 : 30;
+      const dayStep = Math.min(dayLabelInterval, fvH<1?0.5 : fvH<2?1 : fvH<4?1 : fvH<8?1 : fvH<20?2 : fvH<60?5 : 10);
+      const maxMinutes = fvH<1?10 : fvH<2?15 : fvH<4?20 : fvH<8?30 : fvH<20?45 : 60;
+      const nowMinutes = (dt0 - dayStart) / 60000;
+
+      const dayTotalSteps = Math.ceil(1440/dayStep);
+      const dayPts = [];
+      for(let i=0;i<=dayTotalSteps;i++){
+        const m=i*dayStep;
+        if(m>1440)break;
+        const dt=new Date(dayStart.getTime()+m*60000);
+        const bp=sunsetMode?sunPos(dt,sLat,sLng):moonPos(dt,sLat,sLng);
+        const daz=Math.abs(azDiff(tAz,bp.az));
+        const yRaw=toY_cam(bp.alt);
+        const y=Math.max(-H*2, Math.min(H*3, yRaw));
+        dayPts.push({x:cx+gnoH(azDiff(tAz,bp.az)), y, m, alt:bp.alt, daz});
+      }
+
+      ctx.save();
+      ctx.strokeStyle='rgba(255,255,255,0.12)';
+      ctx.lineWidth=1;ctx.setLineDash([]);
+      let drawing=false;
+      for(let i=0;i<dayPts.length;i++){
+        const p=dayPts[i];
+        const inView=p.daz<89;
+        if(inView){
+          if(!drawing){ctx.beginPath();ctx.moveTo(p.x,p.y);drawing=true;}
+          else ctx.lineTo(p.x,p.y);
+        }else{ if(drawing){ctx.stroke();drawing=false;} }
+      }
+      if(drawing)ctx.stroke();
+      ctx.restore();
+
+      const nowIdx = dayPts.reduce((best,p,i)=>
+        Math.abs(p.m-nowMinutes)<Math.abs(dayPts[best].m-nowMinutes)?i:best, 0);
+      const pastPts2  = dayPts.filter(p=>p.m<=nowMinutes&&p.m>=nowMinutes-maxMinutes&&p.daz<89);
+      const futurePts2= dayPts.filter(p=>p.m>=nowMinutes&&p.m<=nowMinutes+maxMinutes&&p.daz<89);
+      const nowPt={x:moonX,y:moonY,m:nowMinutes};
+      const pastFull  =[...pastPts2,  nowPt];
+      const futureFull=[nowPt, ...futurePts2];
+
+      ctx.save();
+      for(let i=0;i<pastFull.length-1;i++){
+        const ratio0=i/(pastFull.length-1), ratio1=(i+1)/(pastFull.length-1);
+        const a0=0.1+ratio0*0.7, a1=0.1+ratio1*0.7;
+        const g=ctx.createLinearGradient(pastFull[i].x,pastFull[i].y,pastFull[i+1].x,pastFull[i+1].y);
+        g.addColorStop(0,`rgba(100,180,255,${a0})`);g.addColorStop(1,`rgba(100,180,255,${a1})`);
+        ctx.beginPath();ctx.moveTo(pastFull[i].x,pastFull[i].y);ctx.lineTo(pastFull[i+1].x,pastFull[i+1].y);
+        ctx.strokeStyle=g;ctx.lineWidth=1.8;ctx.stroke();
+      }
+      for(let i=0;i<futureFull.length-1;i++){
+        const ratio0=i/(futureFull.length-1), ratio1=(i+1)/(futureFull.length-1);
+        const a0=0.7-ratio0*0.55, a1=0.7-ratio1*0.55;
+        const g=ctx.createLinearGradient(futureFull[i].x,futureFull[i].y,futureFull[i+1].x,futureFull[i+1].y);
+        g.addColorStop(0,`rgba(220,160,60,${a0})`);g.addColorStop(1,`rgba(220,160,60,${a1})`);
+        ctx.beginPath();ctx.moveTo(futureFull[i].x,futureFull[i].y);ctx.lineTo(futureFull[i+1].x,futureFull[i+1].y);
+        ctx.strokeStyle=g;ctx.lineWidth=1.8;ctx.stroke();
+      }
+      ctx.restore();
+
+      {
+        const dtFwdA=new Date(dt0.getTime()+dayStep*60000);
+        const dtFwdB=new Date(dt0.getTime()+dayStep*2*60000);
+        const bpA=sunsetMode?sunPos(dtFwdA,sLat,sLng):moonPos(dtFwdA,sLat,sLng);
+        const bpB=sunsetMode?sunPos(dtFwdB,sLat,sLng):moonPos(dtFwdB,sLat,sLng);
+        const axA=cx+gnoH(azDiff(tAz,bpA.az)), ayA=toY_cam(bpA.alt);
+        const axB=cx+gnoH(azDiff(tAz,bpB.az)), ayB=toY_cam(bpB.alt);
+        const ang=Math.atan2(ayB-ayA, axB-axA);
+        const arrowDist=Math.max(mr,mrV)+22;
+        const arrowX=moonX+Math.cos(ang)*arrowDist;
+        const arrowY=moonY+Math.sin(ang)*arrowDist;
+        const hLen=10, hAngle=0.42;
+        ctx.save();
+        ctx.strokeStyle='rgba(255,200,80,0.9)';
+        ctx.lineWidth=2;ctx.lineCap='round';
+        ctx.beginPath();
+        ctx.moveTo(arrowX,arrowY);
+        ctx.lineTo(arrowX-hLen*Math.cos(ang-hAngle),arrowY-hLen*Math.sin(ang-hAngle));
+        ctx.moveTo(arrowX,arrowY);
+        ctx.lineTo(arrowX-hLen*Math.cos(ang+hAngle),arrowY-hLen*Math.sin(ang+hAngle));
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      ctx.save();
+      const isMobPv = isMobCanvas;
+      const labelItems = [];
+      for(let m=0;m<=1440;m+=dayLabelInterval){
+        const idx=Math.round(m/dayStep);
+        const p=dayPts[idx];
+        if(!p||p.daz>=89)continue;
+        const diffMin=m-nowMinutes;
+        const isPast=diffMin<0;
+        const isNear=Math.abs(diffMin)<=maxMinutes;
+        const label=new Date(dayStart.getTime()+m*60000+9*3600000).toISOString().substr(11,5);
+        if(p.x>=0&&p.x<=W&&p.y>=0&&p.y<=H){
+          const alpha=isNear?(0.5+0.4*(1-Math.abs(diffMin)/maxMinutes)):0.3;
+          const dotColor=isNear?(isPast?`rgba(126,184,232,${alpha})`:`rgba(200,169,110,${alpha})`):'rgba(200,200,220,0.3)';
+          ctx.beginPath();ctx.arc(p.x,p.y,isMobPv?3:2.5,0,Math.PI*2);
+          ctx.fillStyle=dotColor;ctx.fill();
+        }
+        if(p.x>=0&&p.x<=W&&p.y>=0&&p.y<=H){
+          labelItems.push({m,p,label,isPast,isNear,diffMin});
+        }
+      }
+      if(isMobPv){
+        ctx.font=`bold 10px 'Space Mono',monospace`;
+        const labelW = ctx.measureText('00:00').width;
+        const colPad = 4;
+        const colGap = 6;
+        const colEven = W - colPad;
+        const colOdd  = W - colPad - labelW - colGap;
+        for(const item of labelItems){
+          const ly = item.p.y;
+          const isNear = item.isNear, isPast = item.isPast;
+          const minVal = parseInt(item.label.slice(3,5), 10);
+          const isOdd = minVal % 2 !== 0;
+          const lx = (isOdd ? colOdd : colEven) - labelW;
+          const lineColor = isNear
+            ? (isPast ? 'rgba(126,184,232,0.22)' : 'rgba(200,169,110,0.22)')
+            : 'rgba(160,160,180,0.10)';
+          ctx.beginPath();
+          ctx.moveTo(item.p.x + 4, ly);
+          ctx.lineTo(lx - 3, ly);
+          ctx.strokeStyle = lineColor;
+          ctx.lineWidth = 0.8; ctx.setLineDash([2,3]); ctx.stroke(); ctx.setLineDash([]);
+          const bgRect = 'rgba(240,240,248,0.72)';
+          const fgRect = isNear
+            ? (isPast ? 'rgba(10,50,140,0.95)' : 'rgba(130,60,0,0.95)')
+            : 'rgba(30,30,60,0.85)';
+          ctx.textAlign = 'left';
+          const _tw = ctx.measureText(item.label).width;
+          ctx.fillStyle = bgRect;
+          ctx.fillRect(lx-2, ly-9, _tw+4, 11);
+          ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+          ctx.lineWidth = 2; ctx.lineJoin = 'round';
+          ctx.strokeText(item.label, lx, ly-1);
+          ctx.fillStyle = fgRect;
+          ctx.fillText(item.label, lx, ly-1);
+        }
+      } else {
+        ctx.font=`9px 'Space Mono',monospace`;
+        for(const item of labelItems){
+          if(!item.isNear && item.p.x<0||item.p.x>W||item.p.y<0||item.p.y>H)continue;
+          const lx=item.p.x+(item.p.x<cx?-5:5);
+          ctx.textAlign=item.p.x<cx?'right':'left';
+          const col=item.isNear?(item.isPast?'rgba(10,50,140,0.95)':'rgba(130,60,0,0.95)'):'rgba(30,30,60,0.80)';
+          const _tw2=ctx.measureText(item.label).width;
+          const _bx=item.p.x<cx?lx-_tw2-2:lx-2;
+          ctx.fillStyle='rgba(240,240,248,0.72)'; ctx.fillRect(_bx,item.p.y-9,_tw2+4,11);
+          ctx.strokeStyle='rgba(255,255,255,0.6)';ctx.lineWidth=2;ctx.lineJoin='round';
+          ctx.strokeText(item.label,lx,item.p.y-1);
+          ctx.fillStyle=col;
+          ctx.fillText(item.label,lx,item.p.y-1);
+        }
+      }
+      ctx.restore();
+
+      ctx.save();
+      ctx.beginPath();ctx.arc(moonX,moonY,Math.max(mr,mrV)+5,0,Math.PI*2);
+      ctx.strokeStyle='rgba(255,255,255,0.6)';ctx.lineWidth=1.5;
+      ctx.setLineDash([3,3]);ctx.stroke();ctx.setLineDash([]);
+      ctx.restore();
+
+    }catch(e){}
+  }
+  // 月/太陽がFOV外
+  if(bodyVisible&&mAz!==null){
+    const dAz=azDiff(tAz,mAz);
+    const dAzInCam=dAz-pvAzOfs;
+    if(Math.abs(dAzInCam)>fvH/2){
+      const label=sunsetMode?'太陽':'月';
+      ctx.fillStyle=sunsetMode?'#ffaa44':'#7eb8e8';
+      ctx.font=`10px 'Space Mono',monospace`;ctx.textAlign='center';
+      ctx.fillText(`${dAzInCam>0?label+' →':'← '+label} (${Math.abs(dAzInCam).toFixed(1)}° FOV外)`,cx,H*0.4);
+    }
+  }
+
+  if(!bodyVisible&&mAz!==null){
+    const label=sunsetMode?'太陽は地平線以下':'月は地平線以下';
+    ctx.fillStyle=sunsetMode?'rgba(255,150,50,.5)':'rgba(126,184,232,.5)';
+    ctx.font=`9px 'Space Mono',monospace`;ctx.textAlign='center';
+    ctx.fillText(label,cx,horizon-20);
+  }
+  // 情報ラベル（オフセット外：canvas固定位置に表示）
+  ctx.restore();
+  const bodyName=sunsetMode?'太陽':'月';
   const s=curSubject();
   const fovLabel=`FOV ${fvH.toFixed(1)}°  ${bodyName} ${bodyAngDiam.toFixed(3)}°  ${s?s.name:'被写体未選択'} 身長${(SUBJECT_H*100).toFixed(0)}cm  仰角 ${vaTop.toFixed(2)}°`;
   // canvas幅に収まるようフォントサイズを自動縮小（8px→最小6px）
