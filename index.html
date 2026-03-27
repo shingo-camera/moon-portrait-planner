@@ -3184,7 +3184,7 @@ function drawView(dist,tAz,va){
     ctx.setLineDash([]);
     ctx.beginPath();ctx.moveTo(0,bY);ctx.lineTo(W,bY);ctx.stroke();
     // 地面塗り潰し（足元より下・半透明で月が透ける）
-    ctx.fillStyle='rgba(20,45,25,0.55)';
+    ctx.fillStyle='rgba(20,45,25,0.25)';
     ctx.fillRect(0, bY, W, H-bY);
   }
 
@@ -3890,7 +3890,7 @@ function loadSpot(idx){
   if(!spot)return;
   sLat=spot.lat;
   sLng=spot.lng;
-  if(spot.target&&spot.target!==cur) selectSubject(spot.target);
+  if(spot.subjectId && spot.subjectId!==curSubjectId) selectSubject(spot.subjectId);
   if(spot.focal) setF(spot.focal);
   if(spot.orientation) setOrientation(spot.orientation);
   if(spot.tripodH!=null){
@@ -3898,8 +3898,11 @@ function loadSpot(idx){
     const el=document.getElementById('tripod-disp');
     if(el)el.innerHTML=`${tripodH}<span style="font-size:8px;color:var(--sub);">cm</span>`;
   }
-  if(spot.elevOffset!=null){
-    elevOffset=spot.elevOffset;
+  if(spot.elevOffset!=null) elevOffset=spot.elevOffset;
+  if(spot.subjectOffset!=null){
+    subjectOffset=spot.subjectOffset;
+    const el=document.getElementById('subject-offset-disp');
+    if(el) el.textContent=(subjectOffset>=0?'+':'')+subjectOffset+'m';
   }
   if(spot.sunsetMode!=null) setSunsetMode(spot.sunsetMode);
   if(spot.pvAzOfs!=null) pvAzOfs=spot.pvAzOfs;
@@ -4674,11 +4677,12 @@ function openPinAdd(){
   const distH=hav(sLat,sLng,t.lat,t.lng);
   const distLabel=distH<1?`D:${Math.round(distH*1000)}m`:`D:${distH.toFixed(2)}km`;
   const elevLabel=`E:${sElev}m`;
-  const defaultName=`${t.name}_${distLabel}_${elevLabel}`;
+  const subName=curSubject()?curSubject().name:'未選択';
+  const defaultName=`${subName}_${distLabel}_${elevLabel}`;
   const name=prompt('登録名を入力してください', defaultName);
-  if(name===null) return; // キャンセル
+  if(name===null) return;
   const trimmed=name.trim()||defaultName;
-  if(addPin(trimmed, cur, sLat, sLng, sElev)){
+  if(addPin(trimmed, curSubjectId||'', sLat, sLng, sElev)){
     showHint('📌 登録しました：'+trimmed, 2500);
   }
 }
