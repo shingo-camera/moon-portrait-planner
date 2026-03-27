@@ -2178,7 +2178,7 @@ function deleteSubjectFromModal(){
   if(!confirm('この被写体を削除しますか？')) return;
   subjects=subjects.filter(s=>s.id!==_editingSubjectId);
   if(curSubjectId===_editingSubjectId){
-    curSubjectId=subjects.length>0?subjects[0].id:null;
+    curSubjectId=null;
     if(subjectMarker){ map.removeLayer(subjectMarker); subjectMarker=null; }
   }
   saveSubjects();
@@ -5865,7 +5865,7 @@ window.addEventListener('load',()=>{
 
   // 被写体データを復元
   subjects = loadSubjects();
-  if(subjects.length>0) curSubjectId = subjects[0].id;
+  // curSubjectIdはnull（未選択）のまま起動
   renderSubjectList();
 
   // 保存地点を復元
