@@ -594,7 +594,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
     </div>
     <div>
       <div class="sec">06 チャンス一覧</div>
-      <button id="btn-chance" onclick="calcChances()" style="width:100%;background:var(--sur2);border:1px solid var(--bd);border-radius:4px;color:var(--ac);font-family:'Space Mono',monospace;font-size:10px;padding:5px;cursor:pointer;margin-bottom:4px;">📅 選択日から365日を検索</button>
+      <button id="btn-pin-pointchance" onclick="runPinPointChance()"
+        style="width:100%;background:var(--sur2);border:1px solid var(--bd);border-radius:4px;color:var(--ac2);font-family:'Space Mono',monospace;font-size:10px;padding:5px;cursor:pointer;margin-bottom:4px;">📍 ピンポイントチャンス検索（365日）</button>
+      <button id="btn-chance" onclick="calcChances()" style="width:100%;background:var(--sur2);border:1px solid var(--bd);border-radius:4px;color:var(--ac);font-family:'Space Mono',monospace;font-size:10px;padding:5px;cursor:pointer;margin-bottom:4px;">📅 チャンス検索（365日）</button>
       <div id="chance-list" style="color:var(--tx);"></div>
       <button id="btn-fullmoon" onclick="calcFullMoonChances()" style="width:100%;background:var(--sur2);border:1px solid var(--bd);border-radius:4px;color:var(--ac);font-family:'Space Mono',monospace;font-size:10px;padding:5px;cursor:pointer;margin-top:6px;margin-bottom:4px;">🌕 満月チャンス（1年）を検索</button>
       <div id="fullmoon-list" style="color:var(--tx);"></div>
@@ -4101,7 +4103,7 @@ function setSunsetMode(v){
   _all('lb-sunset').forEach(el=>{el.style.color=v?'var(--ac)':'var(--sub)';});
   const pvLabel=document.getElementById('pv-label-text');
   if(pvLabel)pvLabel.textContent=v?'◎ プレビュー（対象 + 太陽）':'◎ プレビュー（対象 + 月）';
-  _all('btn-chance').forEach(el=>{el.textContent=v?'📅 選択日から365日を検索（太陽）':'📅 選択日から365日を検索';});
+  _all('btn-chance').forEach(el=>{el.textContent=v?'📅 チャンス検索（365日）（太陽）':'📅 チャンス検索（365日）';});
   _all('btn-fullmoon').forEach(el=>{el.style.display=v?'none':'';});
   _all('btn-mooncal').forEach(el=>{el.style.display=v?'none':'';});
   // 満月リストをクリア（太陽モード時）
@@ -4720,8 +4722,9 @@ function searchPinChances(pin){
   const topAlt=elAng(distH,pElev,t.elev,t.h);
   const baseAlt=elAng(distH,pElev,t.elev,0);
   const targetAngDiam=Math.atan2(t.h,distM)*180/Math.PI;
-  const AZ_THR=2.5;
   const MOVE_THR=30; // 30m以内のみ
+  // 距離によらず横移動30m以内になる方位角閾値を逆算
+  const AZ_THR=Math.atan2(MOVE_THR, distM)*180/Math.PI;
   const STEP=60*1000;
   const MOON_R=0.265;
   const today=new Date(document.getElementById('idate').value+'T00:00:00+09:00');
@@ -5423,6 +5426,52 @@ function renderFullMoonList(targetList){
   });
 }
 
+function runPinPointChance(){
+  const list=document.getElementById('chance-list');
+  const btn=document.getElementById('btn-pin-pointchance');
+  if(sLat===null||sLng===null){
+    list.textContent='先に撮影地点を選択してください。';
+    updateDrawerIfOpen();
+    return;
+  }
+  if(!curSubject()){
+    list.textContent='先に被写体を登録・選択してください。';
+    updateDrawerIfOpen();
+    return;
+  }
+  btn.textContent='⏳ 計算中…';
+  list.innerHTML='';
+  setTimeout(()=>{
+    const pin={lat:sLat, lng:sLng, elev:sElevGround};
+    const results=searchPinChances(pin);
+    btn.textContent='📍 ピンポイントチャンス検索（365日）';
+    if(results.length===0){
+      list.textContent='365日以内にピンポイントチャンスはありません。（移動30m以内）';
+      updateDrawerIfOpen();
+      return;
+    }
+    // renderPinChanceRowsを流用してchance-listに描画
+    const container=document.createElement('div');
+    renderPinChanceRows(pin, results, container);
+    list.appendChild(container);
+    updateDrawerIfOpen();
+    // 天気取得して再描画
+    const nearResults=results.filter(r=>isInForecastRange(r.ts));
+    if(nearResults.length>0){
+      Promise.all(nearResults.map(r=>{
+        const vp=calcViewPointCoord(r.pLat,r.pLng,r.tAz,r.alt);
+        return fetchWeatherSingle(vp.lat,vp.lng,r.ts);
+      })).then(()=>{
+        list.innerHTML='';
+        const container2=document.createElement('div');
+        renderPinChanceRows(pin, results, container2);
+        list.appendChild(container2);
+        updateDrawerIfOpen();
+      });
+    }
+  },20);
+}
+
 function calcChances(){
   if(sLat===null){
     document.getElementById('chance-list').textContent='先に撮影地点を選択してください。';
@@ -5507,7 +5556,7 @@ function calcChances(){
       }
     }
 
-    btn.textContent=sunsetMode?"📅 選択日から365日を検索（太陽）":"📅 選択日から365日を検索";
+    btn.textContent=sunsetMode?"📅 チャンス検索（365日）（太陽）":"📅 チャンス検索（365日）";
 
     if(results.length===0){
       list.textContent="今後365日以内に条件を満たす日はありません。（方位角±"+AZ_THR+"°）";
