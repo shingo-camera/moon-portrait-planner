@@ -503,7 +503,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
     <div>
       <div class="sec">03 焦点距離</div>
       <div class="fn" id="fn" onclick="promptFocal()" style="cursor:pointer;" title="タップで入力">400<span>mm</span></div>
-      <input type="range" id="fslider" min="9" max="1600" value="400" oninput="setF(+this.value)">
+      <input type="range" id="fslider" min="9" max="1600" value="600" oninput="setF(+this.value)">
       <div class="ps">
         <div class="pb" onclick="setF(9)">9</div>
         <div class="pb" onclick="setF(16)">16</div>
@@ -511,8 +511,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
         <div class="pb" onclick="setF(50)">50</div>
         <div class="pb" onclick="setF(100)">100</div>
         <div class="pb" onclick="setF(200)">200</div>
-        <div class="pb on" onclick="setF(400)">400</div>
-        <div class="pb" onclick="setF(600)">600</div>
+        <div class="pb" onclick="setF(400)">400</div>
+        <div class="pb on" onclick="setF(600)">600</div>
         <div class="pb" onclick="setF(800)">800</div>
         <div class="pb" onclick="setF(1000)">1000</div>
         <div class="pb" onclick="setF(1200)">1200</div>
@@ -900,7 +900,7 @@ function curSubjectAsT(){
 // 短縮エイリアス（旧T[cur]の置き換え）
 function _ct(){ return curSubjectAsT() || {name:'—',lat:35,lng:135,elev:0,h:1.6,physW:0.5,horizonRatio:0.75,topLimitRatio:null,sunsetOk:true,silhouette:'portrait'}; }
 
-let focal=400, compMode='land'; // compMode: 横構図('land')/縦構図('port')の選択状態
+let focal=600, compMode='land'; // compMode: 横構図('land')/縦構図('port')の選択状態
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // 橋データ（将来的に複数対応可能な構造）
@@ -1164,7 +1164,7 @@ let _chanceResults=[], _chanceCtx=null;    // チャンス検索
 let _fullMoonResults=[], _fullMoonCtx=null; // 満月チャンス
 
 // ━━ 登録地点 ━━
-const PIN_STORAGE_KEY='moonLandmarkPins_v1';
+const PIN_STORAGE_KEY='portraitPins_v1';
 function loadPins(){
   try{ return JSON.parse(localStorage.getItem(PIN_STORAGE_KEY)||'[]'); }catch(e){ return []; }
 }
@@ -3886,12 +3886,12 @@ function exportOneSpot(idx){
 }
 
 function _saveToLocalStorage(){
-  try{ localStorage.setItem('moon_planner_spots', JSON.stringify(savedSpots)); }catch(e){}
+  try{ localStorage.setItem('portrait_planner_spots', JSON.stringify(savedSpots)); }catch(e){}
 }
 
 function _loadFromLocalStorage(){
   try{
-    const raw=localStorage.getItem('moon_planner_spots');
+    const raw=localStorage.getItem('portrait_planner_spots');
     if(raw){
       const parsed=JSON.parse(raw);
       if(Array.isArray(parsed)){
