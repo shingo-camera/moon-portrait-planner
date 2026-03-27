@@ -1753,10 +1753,6 @@ function initMap(){
     if(s) subjectMarker=L.marker([s.lat,s.lng],{icon:subjectIcon(s.name),interactive:false}).addTo(map);
   }
   map.on('click',e=>{
-    if(_addingSubject){
-      finishAddSubject(e.latlng.lat, e.latlng.lng);
-      return;
-    }
     sLat=e.latlng.lat; sLng=e.latlng.lng; onPick();
   });
 
@@ -2095,16 +2091,14 @@ let _pendingSubjectLat=null, _pendingSubjectLng=null;
 let _editingSubjectId=null;
 
 function startAddSubject(){
-  _addingSubject = true;
-  const btn=document.getElementById('btn-map-add-subject');
-  if(btn){ btn.style.borderColor='var(--ac)'; btn.style.color='var(--ac)'; }
-  showHint('被写体の立ち位置を地図でクリック');
+  if(sLat===null||sLng===null){
+    alert('地図をクリックして地点を選択してからボタンを押してください');
+    return;
+  }
+  openAddSubjectModal(sLat, sLng);
 }
 
-async function finishAddSubject(lat, lng){
-  _addingSubject = false;
-  const btn=document.getElementById('btn-map-add-subject');
-  if(btn){ btn.style.borderColor=''; btn.style.color=''; }
+async function openAddSubjectModal(lat, lng){
   _pendingSubjectLat=lat; _pendingSubjectLng=lng;
   _editingSubjectId=null;
   document.getElementById('subject-modal-title').textContent='👤 被写体を登録';
@@ -2112,19 +2106,18 @@ async function finishAddSubject(lat, lng){
   document.getElementById('inp-subject-offset').value='0';
   document.getElementById('btn-subject-delete').style.display='none';
   document.getElementById('subject-elev-disp').textContent='取得中…';
+  document.getElementById('subject-elev-disp').dataset.elev=0;
   document.getElementById('subject-modal-overlay').style.display='block';
   setTimeout(()=>document.getElementById('inp-subject-name').focus(),100);
   try{
     const elev=await getElev(lat,lng);
     document.getElementById('subject-elev-disp').textContent=`${elev.toFixed(1)} m`;
-    _pendingSubjectLat=lat; _pendingSubjectLng=lng;
-    // elevを後で使えるよう保持
     document.getElementById('subject-elev-disp').dataset.elev=elev;
   }catch(e){
     document.getElementById('subject-elev-disp').textContent='0.0 m';
-    document.getElementById('subject-elev-disp').dataset.elev=0;
   }
 }
+
 
 function openEditSubject(){
   const s=curSubject();
@@ -2141,11 +2134,8 @@ function openEditSubject(){
 }
 
 function cancelAddSubject(){
-  _addingSubject=false;
   _editingSubjectId=null;
   document.getElementById('subject-modal-overlay').style.display='none';
-  const btn=document.getElementById('btn-map-add-subject');
-  if(btn){ btn.style.borderColor=''; btn.style.color=''; }
 }
 
 function saveSubjectFromModal(){
