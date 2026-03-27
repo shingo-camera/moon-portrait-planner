@@ -335,7 +335,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 
 /* ━━━ スマホレイアウト ━━━ */
 @media (max-width:600px){
-  :root{--hdr:0px;--mob-bar:104px;}
+  :root{--hdr:0px;--mob-bar:134px;}
 
   /* ヘッダー非表示 */
   #hdr{display:none;}
@@ -467,13 +467,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
   <div id="pnl">
     <div>
       <div class="sec">01 被写体</div>
-      <!-- 被写体リスト -->
-      <div id="subject-list"></div>
-      <!-- 追加ボタン -->
-      <button onclick="startAddSubject()" id="btn-add-subject"
-        style="width:100%;margin-top:4px;background:var(--sur2);border:1px solid var(--bd);
-        border-radius:4px;color:var(--ac);font-family:'Space Mono',monospace;font-size:9px;
-        padding:5px;cursor:pointer;">＋ 被写体を地図で追加</button>
+      <div class="ig">
+        <label>被写体を選択</label>
+        <select id="sel-subject" onchange="onSubjectChange()"
+          style="background:var(--sur2);border:1px solid var(--bd);border-radius:4px;
+          padding:4px 6px;color:var(--tx);font-family:'Space Mono',monospace;font-size:10px;width:100%;outline:none;">
+          <option value="">-- 被写体を選択 --</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:4px;margin-top:4px;">
+        <button class="pb" id="btn-edit-subject" onclick="openEditSubject()" disabled
+          style="flex:1;text-align:center;">✎ 編集</button>
+      </div>
       <div style="margin-top:6px;display:flex;align-items:center;gap:6px;">
         <input type="checkbox" id="cb-sunset" onchange="setSunsetMode(this.checked)"
           style="width:14px;height:14px;accent-color:#c8a96e;cursor:pointer;">
@@ -611,6 +616,13 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
     <!-- マップパネル -->
     <div id="mapbox">
       <div id="map"></div>
+      <!-- 地図上部：被写体追加ボタン -->
+      <div id="map-subject-btn" style="position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:500;">
+        <button id="btn-map-add-subject" onclick="startAddSubject()"
+          style="background:rgba(10,12,20,.85);border:1px solid var(--bd);color:var(--sub);
+          font-family:'Space Mono',monospace;font-size:9px;padding:4px 12px;border-radius:4px;
+          cursor:pointer;-webkit-tap-highlight-color:transparent;">👤 被写体を追加</button>
+      </div>
       <div id="hint">📍 地図をクリックして撮影地点を選択</div>
       <div id="fan-legend"></div>
       <div id="pin-btns" style="position:absolute;bottom:69px;left:8px;z-index:1001;display:flex;flex-direction:column;gap:4px;">
@@ -703,6 +715,14 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
 
 <!-- スマホ用ボトムバー -->
 <div id="mob-bar">
+  <!-- 0行目：被写体選択 -->
+  <div id="mob-subject-row" style="display:flex;align-items:center;gap:2px;">
+    <button id="mob-btn-subject" onclick="openMobSubjectPopup()"
+      style="flex:1;height:26px;background:var(--sur2);border:1px solid var(--ac);border-radius:4px;
+      font-family:'Space Mono',monospace;font-size:9px;color:var(--ac);cursor:pointer;
+      -webkit-tap-highlight-color:transparent;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+      padding:0 6px;">👤 被写体未選択 ▾</button>
+  </div>
   <div id="mob-time-row">
     <div class="mob-tbtn" onclick="shiftTime(-60)">−60</div>
     <div class="mob-tbtn" onclick="shiftTime(-10)">−10</div>
@@ -716,7 +736,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
   </div>
   <div id="mob-focal-row">
     <div id="mob-focal-disp" onclick="promptFocal()" title="タップで入力">400<span style="font-size:9px;color:var(--sub);">mm</span></div>
-    <div class="mob-fbtn" onclick="setF(100)">100</div>
     <div class="mob-fbtn" onclick="setF(200)">200</div>
     <div class="mob-fbtn" onclick="setF(400)">400</div>
     <div class="mob-fbtn" onclick="setF(600)">600</div>
@@ -737,6 +756,18 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
     <div class="mob-icon-btn" onclick="setNow()">NOW</div>
     <div class="mob-icon-btn" onclick="toggleDrawer()">⚙️</div>
   </div>
+</div>
+
+<!-- 被写体選択ポップアップ -->
+<div id="mob-subject-popup" style="display:none;position:fixed;bottom:calc(var(--mob-bar) + 4px);left:4px;right:4px;
+  background:var(--sur);border:1px solid var(--bd);border-radius:10px;
+  z-index:9200;max-height:50vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding:8px 0;box-shadow:0 -4px 20px rgba(0,0,0,.6);">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:0 12px 6px;border-bottom:1px solid var(--bd);">
+    <span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--ac);">👤 被写体</span>
+    <button onclick="closeMobSubjectPopup()" style="background:none;border:none;color:var(--sub);font-size:16px;cursor:pointer;padding:0 4px;">✕</button>
+  </div>
+  <div id="mob-subject-popup-list" style="padding:4px 0;"></div>
 </div>
 
 <!-- スマホ用焦点距離キーパッド -->
@@ -801,6 +832,39 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
     <div id="mob-drawer-content"></div>
   </div>
 </div>
+<!-- 被写体登録・編集モーダル -->
+<div id="subject-modal-overlay" onclick="if(event.target===this)cancelAddSubject()"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10200;">
+  <div style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    background:var(--sur);border:1px solid var(--bd);border-radius:10px;
+    padding:16px;width:min(92vw,360px);box-shadow:0 8px 32px rgba(0,0,0,.7);">
+    <div style="font-family:'Space Mono',monospace;font-size:12px;color:var(--ac);margin-bottom:12px;" id="subject-modal-title">👤 被写体を登録</div>
+    <div class="ig" style="margin-bottom:8px;">
+      <label>名前</label>
+      <input type="text" id="inp-subject-name" placeholder="例：Aさん、モデル1"
+        style="background:var(--sur2);border:1px solid var(--bd);border-radius:4px;
+        padding:6px 8px;color:var(--tx);font-family:'Space Mono',monospace;font-size:11px;width:100%;outline:none;">
+    </div>
+    <div class="ig" style="margin-bottom:8px;">
+      <label>地面標高</label>
+      <div id="subject-elev-disp" style="font-size:10px;color:var(--ac2);padding:3px 0;">取得中…</div>
+    </div>
+    <div class="ig" style="margin-bottom:12px;">
+      <label>高さオフセット [m]　※展望台・ビルの立ち位置高さ（地上は0）</label>
+      <input type="number" id="inp-subject-offset" value="0" min="0" max="2000"
+        style="background:var(--sur2);border:1px solid var(--bd);border-radius:4px;
+        padding:6px 8px;color:var(--tx);font-family:'Space Mono',monospace;font-size:11px;width:100%;outline:none;">
+    </div>
+    <div style="display:flex;gap:6px;">
+      <button class="pb" onclick="cancelAddSubject()" style="flex:1;">キャンセル</button>
+      <button class="pb" id="btn-subject-delete" onclick="deleteSubjectFromModal()"
+        style="display:none;flex:1;border-color:#ff6655;color:#ff6655;">削除</button>
+      <button class="pb" onclick="saveSubjectFromModal()"
+        style="flex:1;border-color:var(--ac);color:var(--ac);">保存</button>
+    </div>
+  </div>
+</div>
+
 <div id="mooncal-overlay" onclick="if(event.target===this)closeMoonCal()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10100;"></div>
 <div id="pin-overlay" onclick="if(event.target===this)closePinPanel()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10100;"></div>
 <div id="pin-popup" style="display:none;position:fixed;top:5%;left:50%;transform:translateX(-50%);
@@ -1961,105 +2025,182 @@ function subjectIcon(name){
   });
 }
 
-function renderSubjectList(){
-  const el = document.getElementById('subject-list');
-  if(!el) return;
-  if(subjects.length===0){
-    el.innerHTML='<div style="font-size:9px;color:var(--sub);padding:4px 0;">被写体が登録されていません</div>';
-    return;
+// プルダウンを更新
+function refreshSubjectSelects(){
+  const opts = '<option value="">-- 被写体を選択 --</option>' +
+    subjects.map(s=>`<option value="${s.id}">${s.name}${s.elevOffset?' (+'+s.elevOffset+'m)':''}</option>`).join('');
+  // PC側：現在値を保持してから更新
+  const pcSel = document.getElementById('sel-subject');
+  const pcPrev = pcSel ? pcSel.value : '';
+  if(pcSel){ pcSel.innerHTML=opts; pcSel.value=curSubjectId||pcPrev||''; }
+  // ドロワーミラー側：同期（ドロワーが開いている場合）
+  const dSel = document.querySelector('#mob-drawer-content #sel-subject');
+  if(dSel){ dSel.innerHTML=opts; dSel.value=curSubjectId||''; }
+  // 編集ボタンのdisabled制御（PC・ドロワー両方）
+  const hasSub = !!curSubjectId;
+  [document.getElementById('btn-edit-subject'),
+   document.querySelector('#mob-drawer-content #btn-edit-subject')].forEach(el=>{
+    if(el) el.disabled=!hasSub;
+  });
+  // スマホボトムバーのボタンラベル更新
+  const btn=document.getElementById('mob-btn-subject');
+  if(btn){
+    const s=curSubject();
+    btn.textContent = s ? `👤 ${s.name} ▾` : '👤 被写体未選択 ▾';
   }
-  el.innerHTML = subjects.map(s=>{
-    const isOn = s.id===curSubjectId;
-    const elevInfo = `${s.lat.toFixed(4)}°N ${s.lng.toFixed(4)}°E`;
-    const offsetStr = s.elevOffset!==0 ? ` +${s.elevOffset}m` : '';
-    return `<div class="tc${isOn?' on':''}" onclick="selectSubject('${s.id}')"
-      style="position:relative;padding-right:28px;">
-      <div class="nm">${s.name}</div>
-      <div class="co">${elevInfo}${offsetStr}</div>
-      <div style="position:absolute;right:4px;top:50%;transform:translateY(-50%);display:flex;gap:3px;">
-        <span onclick="event.stopPropagation();editSubjectOffset('${s.id}')"
-          style="cursor:pointer;font-size:10px;color:var(--sub);padding:1px 3px;border:1px solid var(--bd);border-radius:2px;"
-          title="高さオフセット編集">±</span>
-        <span onclick="event.stopPropagation();deleteSubject('${s.id}')"
-          style="cursor:pointer;font-size:10px;color:var(--sub);padding:1px 3px;border:1px solid var(--bd);border-radius:2px;"
-          title="削除">✕</span>
-      </div>
-    </div>`;
-  }).join('');
 }
 
-function deleteSubject(id){
-  subjects = subjects.filter(s=>s.id!==id);
-  if(curSubjectId===id){
-    curSubjectId = subjects.length>0 ? subjects[0].id : null;
-    // マーカー削除
+function onSubjectChange(){
+  const v = document.getElementById('sel-subject')?.value||'';
+  if(v){
+    selectSubject(v);
+  } else {
+    curSubjectId=null;
     if(subjectMarker){ map.removeLayer(subjectMarker); subjectMarker=null; }
+    refreshSubjectSelects();
+    try{drawView(5,180,3.30);}catch(e){}
+    try{drawCompass(180,3.30);}catch(e){}
+    updateDrawerIfOpen();
   }
-  saveSubjects();
-  renderSubjectList();
-  if(sLat!==null) onPick();
-  else{ try{drawView(5,180,3.30);}catch(e){} try{drawCompass(180,3.30);}catch(e){} }
 }
 
-function editSubjectOffset(id){
-  const s = subjects.find(x=>x.id===id);
-  if(!s) return;
-  const v = prompt(`「${s.name}」の立ち位置高さ(m)\n(展望台・ビルの高さなど。地上は0)`, s.elevOffset||0);
-  if(v===null) return;
-  const n = parseFloat(v);
-  if(!isFinite(n)) return;
-  s.elevOffset = n;
-  saveSubjects();
-  renderSubjectList();
-  if(curSubjectId===id && sLat!==null) onPick();
+// スマホポップアップ（花火プランナー準拠：buttonタグ・tap-highlight対応）
+function openMobSubjectPopup(){
+  const list=document.getElementById('mob-subject-popup-list');
+  if(!list) return;
+  if(subjects.length===0){
+    list.innerHTML='<div style="padding:12px 16px;font-size:11px;color:var(--sub);">被写体が登録されていません<br>地図上の「👤 被写体を追加」から登録してください</div>';
+  } else {
+    list.innerHTML = subjects.map(s=>{
+      const isOn=s.id===curSubjectId;
+      return `<button onclick="selectSubject('${s.id}');closeMobSubjectPopup();"
+        style="display:block;width:100%;text-align:left;padding:10px 16px;
+        background:${isOn?'rgba(200,169,110,0.15)':'none'};border:none;
+        font-family:'Space Mono',monospace;font-size:11px;
+        color:${isOn?'var(--ac)':'var(--tx)'};cursor:pointer;
+        border-bottom:1px solid var(--bd);
+        -webkit-tap-highlight-color:transparent;touch-action:manipulation;">
+        ${isOn?'▶ ':'　'}${s.name}${s.elevOffset?' <span style="font-size:9px;color:var(--sub);">+'+s.elevOffset+'m</span>':''}
+      </button>`;
+    }).join('');
+  }
+  document.getElementById('mob-subject-popup').style.display='block';
+}
+function closeMobSubjectPopup(){
+  document.getElementById('mob-subject-popup').style.display='none';
 }
 
+// モーダル関連
 let _pendingSubjectLat=null, _pendingSubjectLng=null;
-let _pendingSubjectMarker=null;
+let _editingSubjectId=null;
 
 function startAddSubject(){
   _addingSubject = true;
-  const btn = document.getElementById('btn-add-subject');
-  if(btn){ btn.textContent='📍 地図をクリックして被写体の位置を指定'; btn.style.borderColor='var(--ac)'; }
+  const btn=document.getElementById('btn-map-add-subject');
+  if(btn){ btn.style.borderColor='var(--ac)'; btn.style.color='var(--ac)'; }
   showHint('被写体の立ち位置を地図でクリック');
 }
 
 async function finishAddSubject(lat, lng){
   _addingSubject = false;
-  const btn = document.getElementById('btn-add-subject');
-  if(btn){ btn.textContent='＋ 被写体を地図で追加'; btn.style.borderColor=''; }
-
-  // 仮マーカー
-  if(_pendingSubjectMarker){ map.removeLayer(_pendingSubjectMarker); _pendingSubjectMarker=null; }
+  const btn=document.getElementById('btn-map-add-subject');
+  if(btn){ btn.style.borderColor=''; btn.style.color=''; }
   _pendingSubjectLat=lat; _pendingSubjectLng=lng;
-  _pendingSubjectMarker = L.marker([lat,lng],{
-    icon:L.divIcon({html:'<div style="width:20px;height:20px;border-radius:50%;background:#c8a96e;opacity:0.6;border:2px solid #fff;"></div>',className:'',iconAnchor:[10,10]})
-  }).addTo(map);
+  _editingSubjectId=null;
+  document.getElementById('subject-modal-title').textContent='👤 被写体を登録';
+  document.getElementById('inp-subject-name').value='';
+  document.getElementById('inp-subject-offset').value='0';
+  document.getElementById('btn-subject-delete').style.display='none';
+  document.getElementById('subject-elev-disp').textContent='取得中…';
+  document.getElementById('subject-modal-overlay').style.display='block';
+  setTimeout(()=>document.getElementById('inp-subject-name').focus(),100);
+  try{
+    const elev=await getElev(lat,lng);
+    document.getElementById('subject-elev-disp').textContent=`${elev.toFixed(1)} m`;
+    _pendingSubjectLat=lat; _pendingSubjectLng=lng;
+    // elevを後で使えるよう保持
+    document.getElementById('subject-elev-disp').dataset.elev=elev;
+  }catch(e){
+    document.getElementById('subject-elev-disp').textContent='0.0 m';
+    document.getElementById('subject-elev-disp').dataset.elev=0;
+  }
+}
 
-  const name = prompt('被写体の名前を入力してください（例: Aさん、モデル1）');
-  if(!name){ map.removeLayer(_pendingSubjectMarker); _pendingSubjectMarker=null; return; }
+function openEditSubject(){
+  const s=curSubject();
+  if(!s) return;
+  _editingSubjectId=s.id;
+  document.getElementById('subject-modal-title').textContent='👤 被写体を編集';
+  document.getElementById('inp-subject-name').value=s.name;
+  document.getElementById('inp-subject-offset').value=s.elevOffset||0;
+  document.getElementById('subject-elev-disp').textContent=`${(s.elev||0).toFixed(1)} m`;
+  document.getElementById('subject-elev-disp').dataset.elev=s.elev||0;
+  document.getElementById('btn-subject-delete').style.display='';
+  document.getElementById('subject-modal-overlay').style.display='block';
+  setTimeout(()=>document.getElementById('inp-subject-name').focus(),100);
+}
 
-  // 標高取得
-  showHint('標高取得中…');
-  const elev = await getElev(lat, lng);
-  map.removeLayer(_pendingSubjectMarker); _pendingSubjectMarker=null;
+function cancelAddSubject(){
+  _addingSubject=false;
+  _editingSubjectId=null;
+  document.getElementById('subject-modal-overlay').style.display='none';
+  const btn=document.getElementById('btn-map-add-subject');
+  if(btn){ btn.style.borderColor=''; btn.style.color=''; }
+}
 
-  const s = { id:uid(), name:name.trim(), lat, lng, elev, elevOffset:0 };
+function saveSubjectFromModal(){
+  const name=document.getElementById('inp-subject-name').value.trim();
+  if(!name){ alert('名前を入力してください'); return; }
+  const offset=parseFloat(document.getElementById('inp-subject-offset').value)||0;
+  const elev=parseFloat(document.getElementById('subject-elev-disp').dataset.elev)||0;
+
+  if(_editingSubjectId){
+    // 編集
+    const s=subjects.find(x=>x.id===_editingSubjectId);
+    if(s){ s.name=name; s.elevOffset=offset; }
+    saveSubjects();
+    document.getElementById('subject-modal-overlay').style.display='none';
+    _editingSubjectId=null;
+    refreshSubjectSelects();
+    if(subjectMarker && curSubjectId===s?.id){
+      map.removeLayer(subjectMarker);
+      subjectMarker=L.marker([s.lat,s.lng],{icon:subjectIcon(s.name),interactive:false}).addTo(map);
+    }
+    if(sLat!==null) onPick();
+    return;
+  }
+  // 新規
+  const s={id:uid(), name, lat:_pendingSubjectLat, lng:_pendingSubjectLng, elev, elevOffset:offset};
   subjects.push(s);
   saveSubjects();
-  curSubjectId = s.id;
-
-  // マーカー更新
+  curSubjectId=s.id;
   if(subjectMarker){ map.removeLayer(subjectMarker); subjectMarker=null; }
-  subjectMarker = L.marker([lat,lng],{icon:subjectIcon(name.trim()),interactive:false}).addTo(map);
-
-  renderSubjectList();
+  subjectMarker=L.marker([s.lat,s.lng],{icon:subjectIcon(s.name),interactive:false}).addTo(map);
+  document.getElementById('subject-modal-overlay').style.display='none';
+  refreshSubjectSelects();
   showHint(`「${name}」を登録しました`);
   if(sLat!==null) onPick();
   else{ calcSunMoon(); try{drawView(5,180,3.30);}catch(e){} try{drawCompass(180,3.30);}catch(e){} }
 }
 
+function deleteSubjectFromModal(){
+  if(!_editingSubjectId) return;
+  if(!confirm('この被写体を削除しますか？')) return;
+  subjects=subjects.filter(s=>s.id!==_editingSubjectId);
+  if(curSubjectId===_editingSubjectId){
+    curSubjectId=subjects.length>0?subjects[0].id:null;
+    if(subjectMarker){ map.removeLayer(subjectMarker); subjectMarker=null; }
+  }
+  saveSubjects();
+  _editingSubjectId=null;
+  document.getElementById('subject-modal-overlay').style.display='none';
+  refreshSubjectSelects();
+  if(sLat!==null) onPick();
+  else{ try{drawView(5,180,3.30);}catch(e){} try{drawCompass(180,3.30);}catch(e){} }
+}
 
+// 旧renderSubjectListは不要になったが互換のため残す
+function renderSubjectList(){ refreshSubjectSelects(); }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // ELEVATION（国土地理院）
@@ -3982,7 +4123,7 @@ function setSunsetMode(v){
 function selectSubject(id){
   if(!subjects.find(s=>s.id===id)) return;
   curSubjectId = id;
-  renderSubjectList();
+  refreshSubjectSelects();
   const s = curSubject();
   if(map && s){
     if(subjectMarker) map.removeLayer(subjectMarker);
