@@ -2987,9 +2987,12 @@ function drawView(dist,tAz,va){
   const angSize = Math.max(vaTop - vaBase, 0);
   const sizeRatio = Math.min(angSize / fvV, 1);
   const isPL = _ct().silhouette === 'pl';
+  const isPortrait = _ct().silhouette === 'portrait';
   const topRatio = isPL
     ? Math.min(0.60, Math.max(0.40, 0.60 - sizeRatio * 0.20))
-    : Math.min(0.45, Math.max(0.30, 0.45 - sizeRatio * 0.15));
+    : isPortrait
+      ? Math.min(0.60, Math.max(0.40, 0.60 - sizeRatio * 0.20))
+      : Math.min(0.45, Math.max(0.30, 0.45 - sizeRatio * 0.15));
   const targetTopY = H * (1 - topRatio);
 
   // α_cam: 「頂点がtargetTopYに来るようにカメラを向けたときの光軸仰角」
@@ -3158,9 +3161,8 @@ function drawView(dist,tAz,va){
   }
 
 
-  // 地面・地平線はシルエットの後ろに来るよう、シルエット描画前に描く
+  // 地平線（破線）
   if(horizon < H){
-    {const gr=Math.round(12+skyBrightness*30),gg=Math.round(18+skyBrightness*50),gb=Math.round(32+skyBrightness*20);ctx.fillStyle=`rgba(${gr},${gg},${gb},.95)`;ctx.fillRect(0,horizon,W,H-horizon);}
     ctx.strokeStyle='rgba(200,169,110,.4)';ctx.lineWidth=1;ctx.setLineDash([4,4]);
     ctx.beginPath();ctx.moveTo(0,horizon);ctx.lineTo(W,horizon);ctx.stroke();ctx.setLineDash([]);
   }
@@ -3169,7 +3171,6 @@ function drawView(dist,tAz,va){
   // drawBridges: ポートレートモードでは不使用
 
   // ━━━ 人型シルエット描画 ━━━
-  // tY（頂点＝頭頂）・bY（根本＝足元）
   const tY=targetTopY;
   const bY_raw=toY_cam(vaBase);
   const bY=Math.max(bY_raw, tY);
@@ -3177,6 +3178,14 @@ function drawView(dist,tAz,va){
 
   if(thTrue>1 && curSubject()!==null){
     drawPortraitSilhouette(ctx, cx, tY, bY, thTrue);
+    // 足元横線
+    ctx.strokeStyle='rgba(200,169,110,0.7)';
+    ctx.lineWidth=1.5;
+    ctx.setLineDash([]);
+    ctx.beginPath();ctx.moveTo(0,bY);ctx.lineTo(W,bY);ctx.stroke();
+    // 地面塗り潰し（足元より下・半透明で月が透ける）
+    ctx.fillStyle='rgba(20,45,25,0.55)';
+    ctx.fillRect(0, bY, W, H-bY);
   }
 
   // 軌道描画
@@ -3432,7 +3441,7 @@ function drawPortraitSilhouette(ctx, cx, tY, bY, totalH){
   const hipW      = headR * 1.15;
   const neckW     = headR * 0.42;
 
-  ctx.fillStyle   = '#0a0a0e';
+  ctx.fillStyle   = 'rgba(10,10,14,0.55)';
   ctx.strokeStyle = 'rgba(200,169,110,0.5)';
   ctx.lineWidth   = 0.8;
 
@@ -3505,7 +3514,7 @@ function drawPortraitSilhouette(ctx, cx, tY, bY, totalH){
   // 足（靴）
   ctx.lineWidth = 0.8;
   ctx.lineCap = 'round';
-  ctx.fillStyle = '#0a0a0e';
+  ctx.fillStyle = 'rgba(10,10,14,0.55)';
   ctx.beginPath();
   ctx.ellipse(cx - hipW * 0.44 - headR * 0.08, bY - headR * 0.08,
     headR * 0.52, headR * 0.20, -0.12, 0, Math.PI * 2);
