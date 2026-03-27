@@ -623,7 +623,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
           font-family:'Space Mono',monospace;font-size:9px;padding:4px 12px;border-radius:4px;
           cursor:pointer;-webkit-tap-highlight-color:transparent;">👤 被写体を追加</button>
       </div>
-      <div id="hint">📍 地図をクリックして撮影地点を選択</div>
+      <div id="hint" style="display:none;">📍 地図をクリックして撮影地点・被写体位置を選択</div>
       <div id="fan-legend"></div>
       <div id="pin-btns" style="position:absolute;bottom:69px;left:8px;z-index:1001;display:flex;flex-direction:column;gap:4px;">
         <button id="btn-pin-add" onclick="openPinAdd()" title="この地点を登録"
@@ -4391,7 +4391,7 @@ function showHint(msg, durationMs=5000){
   _hintTimer=setTimeout(()=>{
     h.style.color='';
     // 撮影地点未設定なら元のメッセージに戻す
-    if(sLat===null) h.textContent='📍 地図をクリックして撮影地点を選択';
+    if(sLat===null) h.textContent='📍 地図をクリックして撮影地点・被写体位置を選択';
     else h.style.display='none';
   }, durationMs);
 }
