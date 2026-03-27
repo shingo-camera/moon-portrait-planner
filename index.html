@@ -3443,16 +3443,17 @@ function drawPortraitSilhouette(ctx, cx, tY, bY, totalH){
   const hipW      = headR * 1.15;
   const neckW     = headR * 0.42;
 
-  ctx.fillStyle   = 'rgba(10,10,14,0.55)';
-  ctx.strokeStyle = 'rgba(200,169,110,0.5)';
-  ctx.lineWidth   = 0.8;
+  const BLACK = '#0a0a0e';
+  const GOLD  = 'rgba(200,169,110,0.85)';
 
   // 頭
+  ctx.fillStyle = BLACK; ctx.strokeStyle = GOLD; ctx.lineWidth = 0.8;
   ctx.beginPath();
   ctx.ellipse(cx, headCY, headR * 0.86, headR, 0, 0, Math.PI * 2);
   ctx.fill(); ctx.stroke();
 
   // 首
+  ctx.fillStyle = BLACK;
   ctx.beginPath();
   ctx.moveTo(cx - neckW, neckY);
   ctx.lineTo(cx + neckW, neckY);
@@ -3461,6 +3462,7 @@ function drawPortraitSilhouette(ctx, cx, tY, bY, totalH){
   ctx.closePath(); ctx.fill();
 
   // 胴体
+  ctx.fillStyle = BLACK; ctx.strokeStyle = GOLD; ctx.lineWidth = 0.8;
   ctx.beginPath();
   ctx.moveTo(cx - shoulderW, shoulderY);
   ctx.lineTo(cx + shoulderW, shoulderY);
@@ -3470,73 +3472,71 @@ function drawPortraitSilhouette(ctx, cx, tY, bY, totalH){
   ctx.lineTo(cx - hipW, hipY);
   ctx.closePath(); ctx.fill(); ctx.stroke();
 
-  // 腕（左右・自然に下げた状態）
+  // 腕（黒塗り＋ゴールド縁取り）
   const armW = headR * 0.52;
-  ctx.lineWidth = armW;
   ctx.lineCap = 'round';
-  ctx.strokeStyle = 'rgba(200,169,110,0.7)';
-  // 左腕
+  // 左腕（黒塗り）
+  ctx.strokeStyle = BLACK; ctx.lineWidth = armW;
   ctx.beginPath();
   ctx.moveTo(cx - shoulderW + headR * 0.15, shoulderY);
-  ctx.quadraticCurveTo(
-    cx - shoulderW * 1.08, shoulderY + unit * 1.25,
-    cx - shoulderW * 0.92, shoulderY + unit * 2.4
-  );
+  ctx.quadraticCurveTo(cx - shoulderW * 1.08, shoulderY + unit * 1.25, cx - shoulderW * 0.92, shoulderY + unit * 2.4);
   ctx.stroke();
-  // 右腕
+  // 左腕（ゴールド縁取り）
+  ctx.strokeStyle = GOLD; ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(cx - shoulderW + headR * 0.15, shoulderY);
+  ctx.quadraticCurveTo(cx - shoulderW * 1.08, shoulderY + unit * 1.25, cx - shoulderW * 0.92, shoulderY + unit * 2.4);
+  ctx.stroke();
+  // 右腕（黒塗り）
+  ctx.strokeStyle = BLACK; ctx.lineWidth = armW;
   ctx.beginPath();
   ctx.moveTo(cx + shoulderW - headR * 0.15, shoulderY);
-  ctx.quadraticCurveTo(
-    cx + shoulderW * 1.08, shoulderY + unit * 1.25,
-    cx + shoulderW * 0.92, shoulderY + unit * 2.4
-  );
+  ctx.quadraticCurveTo(cx + shoulderW * 1.08, shoulderY + unit * 1.25, cx + shoulderW * 0.92, shoulderY + unit * 2.4);
+  ctx.stroke();
+  // 右腕（ゴールド縁取り）
+  ctx.strokeStyle = GOLD; ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(cx + shoulderW - headR * 0.15, shoulderY);
+  ctx.quadraticCurveTo(cx + shoulderW * 1.08, shoulderY + unit * 1.25, cx + shoulderW * 0.92, shoulderY + unit * 2.4);
   ctx.stroke();
 
-  // 脚（左右）
+  // 脚（黒塗り＋ゴールド縁取り）
   const legW = headR * 0.82;
-  ctx.lineWidth = legW;
   ctx.lineCap = 'butt';
-  // 左脚
+  // 左脚（黒塗り）
+  ctx.strokeStyle = BLACK; ctx.lineWidth = legW;
   ctx.beginPath();
   ctx.moveTo(cx - hipW * 0.48, hipY);
-  ctx.quadraticCurveTo(
-    cx - hipW * 0.58, kneeY,
-    cx - hipW * 0.44, ankleY
-  );
+  ctx.quadraticCurveTo(cx - hipW * 0.58, kneeY, cx - hipW * 0.44, ankleY);
   ctx.stroke();
-  // 右脚
+  // 左脚（ゴールド縁取り）
+  ctx.strokeStyle = GOLD; ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(cx - hipW * 0.48, hipY);
+  ctx.quadraticCurveTo(cx - hipW * 0.58, kneeY, cx - hipW * 0.44, ankleY);
+  ctx.stroke();
+  // 右脚（黒塗り）
+  ctx.strokeStyle = BLACK; ctx.lineWidth = legW;
   ctx.beginPath();
   ctx.moveTo(cx + hipW * 0.48, hipY);
-  ctx.quadraticCurveTo(
-    cx + hipW * 0.58, kneeY,
-    cx + hipW * 0.44, ankleY
-  );
+  ctx.quadraticCurveTo(cx + hipW * 0.58, kneeY, cx + hipW * 0.44, ankleY);
+  ctx.stroke();
+  // 右脚（ゴールド縁取り）
+  ctx.strokeStyle = GOLD; ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(cx + hipW * 0.48, hipY);
+  ctx.quadraticCurveTo(cx + hipW * 0.58, kneeY, cx + hipW * 0.44, ankleY);
   ctx.stroke();
 
-  // 足（靴）
-  ctx.lineWidth = 0.8;
-  ctx.lineCap = 'round';
-  ctx.fillStyle = 'rgba(200,169,110,0.7)';
+  // 足（黒塗り＋ゴールド縁取り）
+  ctx.lineWidth = 0.8; ctx.lineCap = 'round';
+  ctx.fillStyle = BLACK; ctx.strokeStyle = GOLD;
   ctx.beginPath();
-  ctx.ellipse(cx - hipW * 0.44 - headR * 0.08, bY - headR * 0.08,
-    headR * 0.52, headR * 0.20, -0.12, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.ellipse(cx - hipW * 0.44 - headR * 0.08, bY - headR * 0.08, headR * 0.52, headR * 0.20, -0.12, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
   ctx.beginPath();
-  ctx.ellipse(cx + hipW * 0.44 + headR * 0.08, bY - headR * 0.08,
-    headR * 0.52, headR * 0.20, 0.12, 0, Math.PI * 2);
-  ctx.fill();
-
-  // アウトライン（胴体・腕・脚の外形）
-  ctx.strokeStyle = 'rgba(200,169,110,0.4)';
-  ctx.lineWidth = 0.7;
-  ctx.beginPath();
-  ctx.moveTo(cx - shoulderW, shoulderY);
-  ctx.lineTo(cx + shoulderW, shoulderY);
-  ctx.lineTo(cx + hipW, hipY);
-  ctx.lineTo(cx + waistW, waistY);
-  ctx.lineTo(cx - waistW, waistY);
-  ctx.lineTo(cx - hipW, hipY);
-  ctx.closePath(); ctx.stroke();
+  ctx.ellipse(cx + hipW * 0.44 + headR * 0.08, bY - headR * 0.08, headR * 0.52, headR * 0.20, 0.12, 0, Math.PI * 2);
+  ctx.fill(); ctx.stroke();
 }
 
 function drawCompass(tAz,va){
