@@ -507,7 +507,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
     </div>
     <div>
       <div class="sec">03 焦点距離</div>
-      <div class="fn" id="fn" onclick="promptFocal()" style="cursor:pointer;" title="タップで入力">400<span>mm</span></div>
+      <div class="fn" id="fn" onclick="promptFocal()" style="cursor:pointer;" title="タップで入力">600<span>mm</span></div>
       <input type="range" id="fslider" min="9" max="1600" value="600" oninput="setF(+this.value)">
       <div class="ps">
         <div class="pb" onclick="setF(9)">9</div>
@@ -4214,7 +4214,7 @@ function updateDrawerIfOpen(){
 
   // ② innerHTML更新が必要なテキスト表示要素
   ['i-d','i-e','i-a','i-v','t-sr','t-ss','t-mr','t-ms','p-age','p-name',
-   'i-dow','tripod-disp','fn'].forEach(id=>{
+   'i-dow','tripod-disp','fn','subject-offset-disp'].forEach(id=>{
     const s=src.querySelector('#'+id);
     const d=dst.querySelector('#'+id);
     if(s&&d) d.innerHTML=s.innerHTML;
@@ -4315,6 +4315,8 @@ function _syncDrawerContent(){
   if(dstChance) renderChanceList(dstChance);
   if(dstFull) renderFullMoonList(dstFull);
   if(dstPinpoint) renderPinPointChanceList(dstPinpoint);
+  // 被写体プルダウンをドロワー側に同期
+  refreshSubjectSelects();
   // ヘッダー日時表示を即時更新
   const _ds=document.getElementById('idate').value;
   const _ts=document.getElementById('itime').value;
@@ -4324,6 +4326,13 @@ function _syncDrawerContent(){
   // cb-sunsetのオン・オフをsunsetModeに転送
   const dCbSunset=dst.querySelector('#cb-sunset');
   if(dCbSunset) dCbSunset.onchange=()=>setSunsetMode(dCbSunset.checked);
+  // ドロワー内のsel-subjectをPC側に転送
+  const dSelSubject=dst.querySelector('#sel-subject');
+  if(dSelSubject) dSelSubject.onchange=()=>{
+    const pcSel=document.getElementById('sel-subject');
+    if(pcSel) pcSel.value=dSelSubject.value;
+    onSubjectChange();
+  };
   ['idate','itime'].forEach(id=>{
     const dEl=dst.querySelector('#'+id);
     const sEl=document.getElementById(id);
@@ -4376,9 +4385,15 @@ function _mirrorValues(src, dst){
     if(el.type==='checkbox') mirror.checked=el.checked;
     else mirror.value=el.value;
   });
+  // select値を同期
+  src.querySelectorAll('select').forEach(el=>{
+    if(!el.id)return;
+    const mirror=dst.querySelector('#'+el.id);
+    if(mirror) mirror.value=el.value;
+  });
   // テキスト表示系を同期（idで特定できるもの）
   ['i-d','i-e','i-a','i-v','t-sr','t-ss','t-mr','t-ms','p-age','p-name',
-   'i-dow','tripod-disp','fn'].forEach(id=>{
+   'i-dow','tripod-disp','fn','subject-offset-disp'].forEach(id=>{
     const s=src.querySelector('#'+id);
     const d=dst.querySelector('#'+id);
     if(s&&d) d.innerHTML=s.innerHTML;
