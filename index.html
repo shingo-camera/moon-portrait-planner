@@ -596,6 +596,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:11px;heigh
       <div class="sec">06 チャンス一覧</div>
       <button id="btn-pin-pointchance" onclick="runPinPointChance()"
         style="width:100%;background:var(--sur2);border:1px solid var(--bd);border-radius:4px;color:var(--ac2);font-family:'Space Mono',monospace;font-size:10px;padding:5px;cursor:pointer;margin-bottom:4px;">📍 ピンポイントチャンス検索（365日）</button>
+      <div id="pinpoint-chance-list" style="color:var(--tx);"></div>
       <button id="btn-chance" onclick="calcChances()" style="width:100%;background:var(--sur2);border:1px solid var(--bd);border-radius:4px;color:var(--ac);font-family:'Space Mono',monospace;font-size:10px;padding:5px;cursor:pointer;margin-bottom:4px;">📅 チャンス検索（365日）</button>
       <div id="chance-list" style="color:var(--tx);"></div>
       <button id="btn-fullmoon" onclick="calcFullMoonChances()" style="width:100%;background:var(--sur2);border:1px solid var(--bd);border-radius:4px;color:var(--ac);font-family:'Space Mono',monospace;font-size:10px;padding:5px;cursor:pointer;margin-top:6px;margin-bottom:4px;">🌕 満月チャンス（1年）を検索</button>
@@ -5427,7 +5428,7 @@ function renderFullMoonList(targetList){
 }
 
 function runPinPointChance(){
-  const list=document.getElementById('chance-list');
+  const list=document.getElementById('pinpoint-chance-list');
   const btn=document.getElementById('btn-pin-pointchance');
   if(sLat===null||sLng===null){
     list.textContent='先に撮影地点を選択してください。';
@@ -5441,8 +5442,6 @@ function runPinPointChance(){
   }
   btn.textContent='⏳ 計算中…';
   list.innerHTML='';
-  // calcChancesの天気Promise再描画が上書きしないようクリア
-  _chanceResults=[]; _chanceCtx=null;
   setTimeout(()=>{
     const pin={lat:sLat, lng:sLng, elev:sElev};
     const results=searchPinChances(pin);
@@ -5452,7 +5451,6 @@ function runPinPointChance(){
       updateDrawerIfOpen();
       return;
     }
-    // renderPinChanceRowsを流用してchance-listに描画
     const container=document.createElement('div');
     renderPinChanceRows(pin, results, container);
     list.appendChild(container);
@@ -5464,6 +5462,7 @@ function runPinPointChance(){
         const vp=calcViewPointCoord(r.pLat,r.pLng,r.tAz,r.alt);
         return fetchWeatherSingle(vp.lat,vp.lng,r.ts);
       })).then(()=>{
+        // pinpoint-chance-listのみ再描画（chance-listは触らない）
         list.innerHTML='';
         const container2=document.createElement('div');
         renderPinChanceRows(pin, results, container2);
