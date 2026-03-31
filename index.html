@@ -1228,6 +1228,7 @@ let sunsetMode=false; // 夕日モード（PLのみ）
 
 // ━━ チャンス検索結果（グローバル保持）━━
 let _chanceResults=[], _chanceCtx=null;    // チャンス検索
+let _pinpointResults=[], _pinpointPin=null; // ピンポイントチャンス検索
 let _fullMoonResults=[], _fullMoonCtx=null; // 満月チャンス
 
 // ━━ 登録地点 ━━
@@ -1881,6 +1882,9 @@ function updateMapBtns(az){
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 async function onPick(){
   if(sLat===null||sLng===null)return;
+  // 📌登録ボタンを有効化（被写体未選択でも撮影地点が確定したら活性化）
+  const pinAddBtn=document.getElementById('btn-pin-add');
+  if(pinAddBtn){pinAddBtn.disabled=false;pinAddBtn.style.opacity='1';}
   if(!curSubject()){
     // 被写体未選択でも撮影地点の更新はする（マーカー・標高）
     if(map&&sMarker){try{map.removeLayer(sMarker);}catch(e){}}
@@ -1896,9 +1900,6 @@ async function onPick(){
     try{drawCompass(180,3.30);}catch(e){}
     return;
   }
-  // 📌登録ボタンを有効化
-  const pinAddBtn=document.getElementById('btn-pin-add');
-  if(pinAddBtn){pinAddBtn.disabled=false;pinAddBtn.style.opacity='1';}
   // elevOffsetは地点変更時にリセットしない（ユーザーが手動でRstボタンを押す）
   // スマホでは撮影地点確定後にhintを非表示
   if(detectMobile()){const h=document.getElementById('hint');if(h)h.style.display='none';}
@@ -4111,8 +4112,10 @@ function setSunsetMode(v){
   if(v) _all('fullmoon-list').forEach(el=>{el.innerHTML='';});
   // モード切替時はチャンス一覧もクリア
   _all('chance-list').forEach(el=>{el.innerHTML='';});
+  _all('pinpoint-chance-list').forEach(el=>{el.innerHTML='';});
   _chanceResults=[];_chanceCtx=null;
   _fullMoonResults=[];_fullMoonCtx=null;
+  _pinpointResults=[];_pinpointPin=null;
   calcSunMoon();
   if(sLat!==null){
     const t=_ct();
@@ -4308,8 +4311,10 @@ function _syncDrawerContent(){
   // chance-list/fullmoon-listをドロワー側に描画（innerHTML全体コピーでonclick/canvasが失われるため）
   const dstChance=dst.querySelector('#chance-list');
   const dstFull=dst.querySelector('#fullmoon-list');
+  const dstPinpoint=dst.querySelector('#pinpoint-chance-list');
   if(dstChance) renderChanceList(dstChance);
   if(dstFull) renderFullMoonList(dstFull);
+  if(dstPinpoint) renderPinPointChanceList(dstPinpoint);
   // ヘッダー日時表示を即時更新
   const _ds=document.getElementById('idate').value;
   const _ts=document.getElementById('itime').value;
@@ -5277,6 +5282,15 @@ function setDateFromCal(ds){
 }
 
 // ━━ チャンス一覧描画（グローバル関数）━━
+function renderPinPointChanceList(targetList){
+  const list=targetList||document.getElementById('pinpoint-chance-list');
+  if(!list||!_pinpointPin||_pinpointResults.length===0) return;
+  list.innerHTML='';
+  const container=document.createElement('div');
+  renderPinChanceRows(_pinpointPin, _pinpointResults, container);
+  list.appendChild(container);
+}
+
 function renderChanceList(targetList){
   const list=targetList||document.getElementById('chance-list');
   if(!list||!_chanceCtx) return;
@@ -5454,6 +5468,9 @@ function runPinPointChance(){
     const container=document.createElement('div');
     renderPinChanceRows(pin, results, container);
     list.appendChild(container);
+    // グローバルに保存（ドロワー再描画用）
+    _pinpointResults=results;
+    _pinpointPin=pin;
     updateDrawerIfOpen();
     // 天気取得して再描画
     const nearResults=results.filter(r=>isInForecastRange(r.ts));
@@ -5463,10 +5480,7 @@ function runPinPointChance(){
         return fetchWeatherSingle(vp.lat,vp.lng,r.ts);
       })).then(()=>{
         // pinpoint-chance-listのみ再描画（chance-listは触らない）
-        list.innerHTML='';
-        const container2=document.createElement('div');
-        renderPinChanceRows(pin, results, container2);
-        list.appendChild(container2);
+        renderPinPointChanceList();
         updateDrawerIfOpen();
       });
     }
