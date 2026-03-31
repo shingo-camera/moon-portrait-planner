@@ -5298,12 +5298,33 @@ function setDateFromCal(ds){
 
 // ━━ チャンス一覧描画（グローバル関数）━━
 function renderPinPointChanceList(targetList){
-  const list=targetList||document.getElementById('pinpoint-chance-list');
-  if(!list||!_pinpointPin||_pinpointResults.length===0) return;
-  list.innerHTML='';
-  const container=document.createElement('div');
-  renderPinChanceRows(_pinpointPin, _pinpointResults, container);
-  list.appendChild(container);
+  if(targetList){
+    // 特定のリストのみ更新（_syncDrawerContentから呼ばれる場合）
+    if(!_pinpointPin||_pinpointResults.length===0) return;
+    targetList.innerHTML='';
+    const container=document.createElement('div');
+    renderPinChanceRows(_pinpointPin, _pinpointResults, container);
+    targetList.appendChild(container);
+    return;
+  }
+  // PC側とドロワー側の両方を更新
+  if(!_pinpointPin||_pinpointResults.length===0) return;
+  // PC側
+  const pcList=document.getElementById('pinpoint-chance-list');
+  if(pcList){
+    pcList.innerHTML='';
+    const c1=document.createElement('div');
+    renderPinChanceRows(_pinpointPin, _pinpointResults, c1);
+    pcList.appendChild(c1);
+  }
+  // ドロワー側
+  const dList=document.querySelector('#mob-drawer-content #pinpoint-chance-list');
+  if(dList){
+    dList.innerHTML='';
+    const c2=document.createElement('div');
+    renderPinChanceRows(_pinpointPin, _pinpointResults, c2);
+    dList.appendChild(c2);
+  }
 }
 
 function renderChanceList(targetList){
@@ -5458,34 +5479,40 @@ function renderFullMoonList(targetList){
 
 function runPinPointChance(){
   const list=document.getElementById('pinpoint-chance-list');
+  const dList=document.querySelector('#mob-drawer-content #pinpoint-chance-list');
   const btn=document.getElementById('btn-pin-pointchance');
+  const dBtn=document.querySelector('#mob-drawer-content #btn-pin-pointchance');
+  const setMsg=(msg)=>{
+    if(list) list.textContent=msg;
+    if(dList) dList.textContent=msg;
+  };
+  const setBtnText=(txt)=>{
+    if(btn) btn.textContent=txt;
+    if(dBtn) dBtn.textContent=txt;
+  };
   if(sLat===null||sLng===null){
-    list.textContent='先に撮影地点を選択してください。';
-    updateDrawerIfOpen();
+    setMsg('先に撮影地点を選択してください。');
     return;
   }
   if(!curSubject()){
-    list.textContent='先に被写体を登録・選択してください。';
-    updateDrawerIfOpen();
+    setMsg('先に被写体を登録・選択してください。');
     return;
   }
-  btn.textContent='⏳ 計算中…';
-  list.innerHTML='';
+  setBtnText('⏳ 計算中…');
+  if(list) list.innerHTML='';
+  if(dList) dList.innerHTML='';
   setTimeout(()=>{
     const pin={lat:sLat, lng:sLng, elev:sElev};
     const results=searchPinChances(pin);
-    btn.textContent='📍 ピンポイントチャンス検索（365日）';
+    setBtnText('📍 ピンポイントチャンス検索（365日）');
     if(results.length===0){
-      list.textContent='365日以内にピンポイントチャンスはありません。（移動30m以内）';
-      updateDrawerIfOpen();
+      setMsg('365日以内にピンポイントチャンスはありません。（移動30m以内）');
       return;
     }
-    const container=document.createElement('div');
-    renderPinChanceRows(pin, results, container);
-    list.appendChild(container);
-    // グローバルに保存（ドロワー再描画用）
+    // グローバルに保存して両方に描画
     _pinpointResults=results;
     _pinpointPin=pin;
+    renderPinPointChanceList();
     updateDrawerIfOpen();
     // 天気取得して再描画
     const nearResults=results.filter(r=>isInForecastRange(r.ts));
@@ -5494,7 +5521,6 @@ function runPinPointChance(){
         const vp=calcViewPointCoord(r.pLat,r.pLng,r.tAz,r.alt);
         return fetchWeatherSingle(vp.lat,vp.lng,r.ts);
       })).then(()=>{
-        // pinpoint-chance-listのみ再描画（chance-listは触らない）
         renderPinPointChanceList();
         updateDrawerIfOpen();
       });
