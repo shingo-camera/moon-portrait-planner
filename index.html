@@ -5443,7 +5443,10 @@ function runPinPointChance(){
   list.innerHTML='';
   setTimeout(()=>{
     const pin={lat:sLat, lng:sLng, elev:sElev};
+    const t=curSubjectAsT();
+    alert(`デバッグ:\npin=${JSON.stringify(pin)}\nt=${t?JSON.stringify({lat:t.lat,lng:t.lng,elev:t.elev,h:t.h}):'null'}\ndistM=${t?Math.round(hav(pin.lat,pin.lng,t.lat,t.lng)*1000):'?'}m\nAZ_THR=${t?Math.atan2(30,hav(pin.lat,pin.lng,t.lat,t.lng)*1000)*180/Math.PI:'?'}`);
     const results=searchPinChances(pin);
+    alert(`results.length=${results.length}`);
     btn.textContent='📍 ピンポイントチャンス検索（365日）';
     if(results.length===0){
       list.textContent='365日以内にピンポイントチャンスはありません。（移動30m以内）';
