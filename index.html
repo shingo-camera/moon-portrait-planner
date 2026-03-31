@@ -5455,8 +5455,14 @@ function runPinPointChance(){
     }
     // renderPinChanceRowsを流用してchance-listに描画
     const container=document.createElement('div');
-    renderPinChanceRows(pin, results, container);
+    try{
+      renderPinChanceRows(pin, results, container);
+      alert('renderPinChanceRows完了 container.children='+container.children.length);
+    }catch(e){
+      alert('renderPinChanceRowsエラー:'+e.message);
+    }
     list.appendChild(container);
+    alert('list.appendChild完了 list.innerHTML長さ='+list.innerHTML.length);
     updateDrawerIfOpen();
     // 天気取得して再描画
     const nearResults=results.filter(r=>isInForecastRange(r.ts));
