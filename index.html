@@ -5441,12 +5441,11 @@ function runPinPointChance(){
   }
   btn.textContent='⏳ 計算中…';
   list.innerHTML='';
+  // calcChancesの天気Promise再描画が上書きしないようクリア
+  _chanceResults=[]; _chanceCtx=null;
   setTimeout(()=>{
     const pin={lat:sLat, lng:sLng, elev:sElev};
-    const t=curSubjectAsT();
-    alert(`デバッグ:\npin=${JSON.stringify(pin)}\nt=${t?JSON.stringify({lat:t.lat,lng:t.lng,elev:t.elev,h:t.h}):'null'}\ndistM=${t?Math.round(hav(pin.lat,pin.lng,t.lat,t.lng)*1000):'?'}m\nAZ_THR=${t?Math.atan2(30,hav(pin.lat,pin.lng,t.lat,t.lng)*1000)*180/Math.PI:'?'}`);
     const results=searchPinChances(pin);
-    alert(`results.length=${results.length}`);
     btn.textContent='📍 ピンポイントチャンス検索（365日）';
     if(results.length===0){
       list.textContent='365日以内にピンポイントチャンスはありません。（移動30m以内）';
@@ -5455,14 +5454,8 @@ function runPinPointChance(){
     }
     // renderPinChanceRowsを流用してchance-listに描画
     const container=document.createElement('div');
-    try{
-      renderPinChanceRows(pin, results, container);
-      alert('renderPinChanceRows完了 container.children='+container.children.length);
-    }catch(e){
-      alert('renderPinChanceRowsエラー:'+e.message);
-    }
+    renderPinChanceRows(pin, results, container);
     list.appendChild(container);
-    alert('list.appendChild完了 list.innerHTML長さ='+list.innerHTML.length);
     updateDrawerIfOpen();
     // 天気取得して再描画
     const nearResults=results.filter(r=>isInForecastRange(r.ts));
